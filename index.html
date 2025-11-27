@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Zomato/Swiggy Target Price Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+    :root {
+        --bg: #ffffff;
+        --text: #000000;
+        --card: #ffffff;
+        --input-bg: #f2f2f2;
+        --border: #d0d0d0;
+        --primary: #d32f2f;
+        --secondary: #b71c1c;
+    }
+
+    [data-theme="dark"] {
+        --bg: #121212;
+        --text: #ffffff;
+        --card: #1e1e1e;
+        --input-bg: #2a2a2a;
+        --border: #444444;
+        --primary: #ff5252;
+        --secondary: #e04848;
+    }
+
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        transition: 0.3s;
+    }
+
+    .container {
+        max-width: 650px;
+        margin: auto;
+        background: var(--card);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    h2 {
+        text-align: center;
+        color: var(--primary);
+        margin-bottom: 20px;
+    }
+
+    label {
+        font-weight: bold;
+        display: block;
+        margin-top: 12px;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-top: 6px;
+        border-radius: 8px;
+        background: var(--input-bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        transition: 0.3s;
+    }
+
+    .result-box {
+        background: var(--input-bg);
+        padding: 18px;
+        border-radius: 10px;
+        margin-top: 25px;
+        white-space: pre-line;
+        font-family: monospace;
+        font-size: 15px;
+        border: 1px solid var(--border);
+    }
+
+    .theme-toggle {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 15px;
+        cursor: pointer;
+        font-size: 14px;
+        opacity: 0.8;
+    }
+
+    .theme-toggle:hover {
+        opacity: 1;
+    }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <div class="theme-toggle" onclick="toggleTheme()">
+        🌙 / ☀️ Toggle Theme
+    </div>
+
+    <h2>Zomato/Swiggy Target Price Calculator</h2>
+
+    <label>Desired NET Payout (₹):</label>
+    <input type="number" id="payout" step="0.01" placeholder="e.g., 100" oninput="updateCalc()">
+
+    <label>Total Deduction (%):</label>
+    <input type="number" id="deduction" step="0.01" placeholder="e.g., 30" oninput="updateCalc()">
+
+    <div id="output" class="result-box"></div>
+</div>
+
+<script>
+// Auto detect system theme
+function autoDetectTheme() {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = prefersDark ? "dark" : "light";
+}
+autoDetectTheme();
+
+// Manual toggle
+function toggleTheme() {
+    const current = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = current === "dark" ? "light" : "dark";
+}
+
+// Main calculator
+function updateCalc() {
+    let p = parseFloat(document.getElementById("payout").value);
+    let d = parseFloat(document.getElementById("deduction").value) / 100;
+
+    if (isNaN(p) || isNaN(d)) {
+        document.getElementById("output").textContent = "";
+        return;
+    }
+
+    const PRODUCT_GST = 0.05;
+    const FEE_GST = 0.18;
+
+    let retained = 1 - d * (1 + FEE_GST);
+    if (retained <= 0) {
+        document.getElementById("output").textContent = "❗ Error: Deduction too high.";
+        return;
+    }
+
+    let sp = (p / retained);
+    let spExcl = sp.toFixed(2);
+    let spIncl = (sp * (1 + PRODUCT_GST)).toFixed(2);
+
+    let fee = (sp * d).toFixed(2);
+    let feeGst = (fee * FEE_GST).toFixed(2);
+    let prodGst = (sp * PRODUCT_GST).toFixed(2);
+
+    let final = (spIncl - fee - feeGst - prodGst).toFixed(2);
+
+    document.getElementById("output").textContent =
+`
+--------------------------------------------------
+             PRICE BREAKDOWN
+--------------------------------------------------
+
+Selling Price (Excl. GST):     ₹${spExcl}
+Customer Price (Incl. GST):    ₹${spIncl}
+
+Deductions:
+  Platform Fee:                -₹${fee}
+  GST on Platform Fee (18%):   -₹${feeGst}
+  Product GST (5%):            -₹${prodGst}
+
+--------------------------------------------------
+NET PAYOUT =                   ₹${final}
+--------------------------------------------------
+`;
+}
+</script>
+
+</body>
+</html>
