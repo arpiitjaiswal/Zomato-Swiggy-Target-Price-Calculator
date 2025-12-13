@@ -2,176 +2,448 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Zomato/Swiggy Target Price Calculator</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reverse Settlement Calculator</title>
 
 <style>
-    :root {
-        --bg: #ffffff;
-        --text: #000000;
-        --card: #ffffff;
-        --input-bg: #f2f2f2;
-        --border: #d0d0d0;
-        --primary: #d32f2f;
-        --secondary: #b71c1c;
-    }
+/* 1. Base Variables (Light Mode Default) */
+:root{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --input-bg:#f1f5f9;
+  --accent:#2563eb;
+  --ok:#16a34a;
+  --bad:#dc2626;
+  --shadow:0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
 
-    [data-theme="dark"] {
-        --bg: #121212;
-        --text: #ffffff;
-        --card: #1e1e1e;
-        --input-bg: #2a2a2a;
-        --border: #444444;
-        --primary: #ff5252;
-        --secondary: #e04848;
-    }
+/* 2. System Dark Mode Support (Auto Detect) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0f172a;
+    --card:#1e293b;
+    --text:#f8fafc;
+    --muted:#94a3b8;
+    --border:#334155;
+    --input-bg:#020617;
+    --accent:#60a5fa;
+  }
+}
 
-    body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        transition: 0.3s;
-    }
+/* 3. Manual Dark Mode Override */
+[data-theme="dark"]{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#f8fafc;
+  --muted:#94a3b8;
+  --border:#334155;
+  --input-bg:#020617;
+  --accent:#60a5fa;
+}
+[data-theme="light"]{
+  --bg:#f8fafc;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --border:#e2e8f0;
+  --input-bg:#f1f5f9;
+  --accent:#2563eb;
+}
 
-    .container {
-        max-width: 650px;
-        margin: auto;
-        background: var(--card);
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    }
+*{box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;}
 
-    h2 {
-        text-align: center;
-        color: var(--primary);
-        margin-bottom: 20px;
-    }
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  padding: 20px 10px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
 
-    label {
-        font-weight: bold;
-        display: block;
-        margin-top: 12px;
-    }
+.container{
+  max-width:600px;
+  margin:0 auto;
+}
 
-    input {
-        width: 100%;
-        padding: 12px;
-        margin-top: 6px;
-        border-radius: 8px;
-        background: var(--input-bg);
-        color: var(--text);
-        border: 1px solid var(--border);
-        transition: 0.3s;
-    }
+.card{
+  background:var(--card);
+  border-radius:16px;
+  padding:24px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+}
 
-    .result-box {
-        background: var(--input-bg);
-        padding: 18px;
-        border-radius: 10px;
-        margin-top: 25px;
-        white-space: pre-line;
-        font-family: monospace;
-        font-size: 15px;
-        border: 1px solid var(--border);
-    }
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:24px;
+}
+.header h1{margin:0; font-size:1.25rem;}
+.theme-btn{
+  background:none; border:1px solid var(--border);
+  padding:6px 12px; border-radius:8px; cursor:pointer; color:var(--text);
+}
 
-    .theme-toggle {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 15px;
-        cursor: pointer;
-        font-size: 14px;
-        opacity: 0.8;
-    }
+/* Main Input Area */
+.main-input-group{
+  margin-bottom:24px;
+}
+.main-label{
+  display:block; font-weight:700; margin-bottom:8px; color:var(--text);
+}
+.currency-input{
+  position:relative;
+}
+.currency-input span{
+  position:absolute; left:16px; top:50%; transform:translateY(-50%);
+  color:var(--muted); font-weight:600;
+}
+input.big-input{
+  width:100%; padding:16px 16px 16px 32px;
+  font-size:1.5rem; border-radius:12px;
+  border:2px solid var(--border);
+  background:var(--bg); color:var(--text); outline:none; font-weight:700;
+}
+input.big-input:focus{border-color:var(--accent);}
 
-    .theme-toggle:hover {
-        opacity: 1;
-    }
+/* Grid for Settings */
+.settings-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:16px;
+  margin-bottom:24px;
+}
+.setting-item label{
+  display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px;
+}
+
+/* Updated Simple Input Style (No suffix) */
+input.simple-input{
+  width:100%; padding:12px;
+  border-radius:8px; border:1px solid var(--border);
+  background:var(--input-bg); color:var(--text); font-size:1rem;
+  outline:none;
+}
+input.simple-input:focus{border-color:var(--accent); background:var(--card);}
+
+.full-width{
+  grid-column: span 2;
+}
+
+/* Accordion Results Section */
+.result-section{
+  background:var(--input-bg);
+  border-radius:12px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+
+.acc-item {
+  border-bottom: 1px solid var(--border);
+}
+.acc-item:last-child {
+  border-bottom: none;
+}
+
+.acc-header {
+  padding: 16px;
+  background: var(--input-bg);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  user-select: none;
+}
+.acc-header:hover {
+  background: var(--bg);
+}
+.acc-header .title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.acc-header .amount {
+  font-weight: 700;
+}
+.acc-icon {
+  font-size: 0.8rem;
+  transition: transform 0.2s;
+}
+
+/* Expand Logic */
+.acc-body {
+  display: none;
+  padding: 0 16px 16px 16px;
+  background: var(--input-bg);
+  border-top: 1px dashed var(--border);
+}
+.acc-item.open .acc-body {
+  display: block;
+  animation: slideDown 0.2s ease-out;
+}
+.acc-item.open .acc-icon {
+  transform: rotate(180deg);
+}
+
+/* Rows inside body */
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0; /* Slightly more breathing room */
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.row span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.row span:last-child {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Percentage Badge Style */
+.pct-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Colors for sections */
+.val-positive { color: var(--ok); }
+
+/* UPDATED: Added !important to ensure red color overrides the default row color */
+.val-negative { color: var(--bad) !important; }
+
+/* Final Total */
+.final-row {
+  padding: 20px;
+  background: var(--card);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 2px solid var(--border);
+}
+.final-label { font-weight: 700; font-size: 1.1rem; }
+.final-amount { font-weight: 800; font-size: 1.4rem; color: var(--ok); }
+
+@keyframes slideDown {
+  from {opacity:0; transform:translateY(-5px);}
+  to {opacity:1; transform:translateY(0);}
+}
 </style>
-
 </head>
 <body>
 
 <div class="container">
-
-    <div class="theme-toggle" onclick="toggleTheme()">
-        🌙 / ☀️ Toggle Theme
+  <div class="card">
+    <div class="header">
+      <h1>Zomato/Swiggy Payout Calculator</h1>
+      <button class="theme-btn" onclick="toggleTheme()">🌗</button>
     </div>
 
-    <h2>Zomato/Swiggy Target Price Calculator</h2>
+    <div class="main-input-group">
+      <label class="main-label">Enter Payout Amount:</label>
+      <div class="currency-input">
+        <span>₹</span>
+        <input type="number" id="desiredPayout" class="big-input" placeholder="0.00" oninput="calc()">
+      </div>
+    </div>
 
-    <label>Desired NET Payout (₹):</label>
-    <input type="number" id="payout" step="0.01" placeholder="e.g., 100" oninput="updateCalc()">
+    <div class="settings-grid">
+      <div class="setting-item">
+        <label>GST on Item (%)</label>
+        <input type="number" id="gst" value="5" class="simple-input" oninput="calc(); updatePercentageLabels()">
+      </div>
 
-    <label>Total Deduction (%):</label>
-    <input type="number" id="deduction" step="0.01" placeholder="e.g., 30" oninput="updateCalc()">
+      <div class="setting-item">
+        <label>Platform Commission Fee (%)</label>
+        <input type="number" id="comm" value="30" class="simple-input" oninput="calc(); updatePercentageLabels()">
+      </div>
 
-    <div id="output" class="result-box"></div>
+      <div class="setting-item">
+        <label>Payment Gateway Fee (%)</label>
+        <input type="number" id="pg" value="1.84" class="simple-input" oninput="calc(); updatePercentageLabels()">
+      </div>
+
+      <div class="setting-item">
+        <label>GST on Platform Fees (%)</label>
+        <input type="number" id="gstOnFee" value="18" class="simple-input" oninput="calc(); updatePercentageLabels()">
+      </div>
+
+      <div class="setting-item full-width">
+        <label>Packaging Charges (₹)</label>
+        <input type="number" id="pack" placeholder="Enter your Packaging Charges" class="simple-input" oninput="calc()">
+      </div>
+    </div>
+
+    <div class="result-section">
+      
+      <div class="acc-item open">
+        <div class="acc-header" onclick="toggleAcc(this)">
+          <span class="title">A. Bill Amount <small class="acc-icon">▼</small></span>
+          <span class="amount" id="res_a_total">₹ 0.00</span>
+        </div>
+        <div class="acc-body">
+          <div class="row"><span>Item Value (Excl. Tax)</span> <span id="res_a_base">₹ 0.00</span></div>
+          <div class="row"><span>Packaging Charges</span> <span id="res_a_pack">₹ 0.00</span></div>
+          <div class="row"><span id="res_a_gst_label">GST Collected on Item</span> <span id="res_a_gst">₹ 0.00</span></div>
+        </div>
+      </div>
+
+      <div class="acc-item open">
+        <div class="acc-header" onclick="toggleAcc(this)">
+          <span class="title">B. Platform Fees <small class="acc-icon">▼</small></span>
+          <span class="amount val-negative" id="res_b_total">- ₹ 0.00</span>
+        </div>
+        <div class="acc-body">
+          <div class="row"><span id="res_b_comm_label">Platform Commission Fee</span> <span id="res_b_comm" class="val-negative">- ₹ 0.00</span></div>
+          <div class="row"><span id="res_b_pg_label">Payment Gateway Fee</span> <span id="res_b_pg" class="val-negative">- ₹ 0.00</span></div>
+        </div>
+      </div>
+
+      <div class="acc-item open">
+        <div class="acc-header" onclick="toggleAcc(this)">
+          <span class="title">C. Taxes <small class="acc-icon">▼</small></span>
+          <span class="amount val-negative" id="res_c_total">- ₹ 0.00</span>
+        </div>
+        <div class="acc-body">
+          <div class="row"><span id="res_c_gst_fee_label">GST on Platform Fees</span> <span id="res_c_gst_fee" class="val-negative">- ₹ 0.00</span></div>
+          <div class="row"><span id="res_c_gst_remit_label">GST Collected on Item to Govt.</span> <span id="res_c_gst_remit" class="val-negative">- ₹ 0.00</span></div>
+        </div>
+      </div>
+
+      <div class="final-row">
+        <span class="final-label">Net Payout</span>
+        <span class="final-amount" id="res_final">₹ 0.00</span>
+      </div>
+
+    </div>
+
+  </div>
 </div>
 
 <script>
-// Auto detect system theme
-function autoDetectTheme() {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.dataset.theme = prefersDark ? "dark" : "light";
+document.addEventListener('DOMContentLoaded', () => {
+    updatePercentageLabels();
+    calc();
+});
+
+function toggleTheme(){
+  // Toggles between specific overrides
+  const html = document.documentElement;
+  // If no attribute set, check media query to decide next state
+  if(!html.hasAttribute("data-theme")){
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    html.dataset.theme = isDark ? "light" : "dark";
+  } else {
+    html.dataset.theme = html.dataset.theme === "dark" ? "light" : "dark";
+  }
 }
-autoDetectTheme();
 
-// Manual toggle
-function toggleTheme() {
-    const current = document.documentElement.dataset.theme;
-    document.documentElement.dataset.theme = current === "dark" ? "light" : "dark";
+function toggleAcc(header){
+  header.parentElement.classList.toggle('open');
 }
 
-// Main calculator
-function updateCalc() {
-    let p = parseFloat(document.getElementById("payout").value);
-    let d = parseFloat(document.getElementById("deduction").value) / 100;
+function updatePercentageLabels() {
+    const gstVal = parseFloat(document.getElementById('gst').value) || 0;
+    const commVal = parseFloat(document.getElementById('comm').value) || 0;
+    const pgVal = parseFloat(document.getElementById('pg').value) || 0;
+    const gstFeeVal = parseFloat(document.getElementById('gstOnFee').value) || 0;
 
-    if (isNaN(p) || isNaN(d)) {
-        document.getElementById("output").textContent = "";
-        return;
+    // A. GST Collected
+    document.getElementById('res_a_gst_label').innerHTML = `GST Collected on Item <span class="pct-label">(${gstVal}%)</span>`;
+    
+    // B. Platform Fees
+    document.getElementById('res_b_comm_label').innerHTML = `Platform Commission <span class="pct-label">(${commVal}%)</span>`;
+    document.getElementById('res_b_pg_label').innerHTML = `Payment Gateway Fee <span class="pct-label">(${pgVal}%)</span>`;
+
+    // C. Taxes
+    document.getElementById('res_c_gst_fee_label').innerHTML = `GST on Platform Fees <span class="pct-label">(${gstFeeVal}%)</span>`;
+    document.getElementById('res_c_gst_remit_label').innerHTML = `GST Collected on Item to Govt. <span class="pct-label">(${gstVal}%)</span>`;
+}
+
+// Helper: Formats currency. If isDeduction is true, makes it red with a minus sign.
+function fmt(val, isDeduction = false) {
+    const formatted = `₹ ${val.toFixed(2)}`;
+    if(isDeduction) {
+        return `<span class="val-negative">- ${formatted}</span>`;
     }
+    return formatted;
+}
 
-    const PRODUCT_GST = 0.05;
-    const FEE_GST = 0.18;
+function calc(){
+  let payout = parseFloat(document.getElementById('desiredPayout').value);
+  const gst = parseFloat(document.getElementById('gst').value) / 100 || 0;
+  const comm = parseFloat(document.getElementById('comm').value) / 100 || 0;
+  const pg = parseFloat(document.getElementById('pg').value) / 100 || 0;
+  const gstOnFee = parseFloat(document.getElementById('gstOnFee').value) / 100 || 0;
+  const pack = parseFloat(document.getElementById('pack').value) || 0;
+  
+  if(isNaN(payout)) payout = 0;
 
-    let retained = 1 - d * (1 + FEE_GST);
-    if (retained <= 0) {
-        document.getElementById("output").textContent = "❗ Error: Deduction too high.";
-        return;
-    }
+  // --- REVERSE LOGIC ---
+  const feePercent = comm + pg;
+  const taxOnFeePercent = feePercent * gstOnFee;
+  const taxOnItemPercent = 1 - (1 / (1 + gst));
 
-    let sp = (p / retained);
-    let spExcl = sp.toFixed(2);
-    let spIncl = (sp * (1 + PRODUCT_GST)).toFixed(2);
+  const totalDeductionRatio = feePercent + taxOnFeePercent + taxOnItemPercent;
 
-    let fee = (sp * d).toFixed(2);
-    let feeGst = (fee * FEE_GST).toFixed(2);
-    let prodGst = (sp * PRODUCT_GST).toFixed(2);
+  let requiredSP = 0;
+  let impossible = false;
+  
+  if(totalDeductionRatio >= 1){
+      impossible = true;
+  } else {
+      requiredSP = payout / (1 - totalDeductionRatio);
+  }
+  
+  if(payout === 0) requiredSP = 0;
 
-    let final = (spIncl - fee - feeGst - prodGst).toFixed(2);
+  if(impossible) {
+      document.getElementById('res_a_total').innerText = "Impossible";
+      document.getElementById('res_final').innerText = "Impossible";
+      return;
+  }
 
-    document.getElementById("output").textContent =
-`
---------------------------------------------------
-             PRICE BREAKDOWN
---------------------------------------------------
+  // --- Calculations ---
+  const itemBaseVal = Math.max(0, (requiredSP - pack) / (1 + gst));
+  const gstCollected = requiredSP - (requiredSP / (1+gst));
+  
+  const b_comm = requiredSP * comm;
+  const b_pg = requiredSP * pg;
+  const b_total = b_comm + b_pg;
+  
+  const c_gst_fee = b_total * gstOnFee;
+  const c_gst_remit = gstCollected; 
+  const c_total = c_gst_fee + c_gst_remit;
 
-Selling Price (Excl. GST):     ₹${spExcl}
-Customer Price (Incl. GST):    ₹${spIncl}
+  // --- Update UI ---
+  
+  // Section A
+  document.getElementById('res_a_total').innerText = `₹ ${requiredSP.toFixed(2)}`;
+  document.getElementById('res_a_base').innerText = `₹ ${itemBaseVal.toFixed(2)}`;
+  document.getElementById('res_a_pack').innerText = `₹ ${pack.toFixed(2)}`;
+  document.getElementById('res_a_gst').innerText = `₹ ${gstCollected.toFixed(2)}`;
 
-Deductions:
-  Platform Fee:                -₹${fee}
-  GST on Platform Fee (18%):   -₹${feeGst}
-  Product GST (5%):            -₹${prodGst}
+  // Section B
+  document.getElementById('res_b_total').innerHTML = fmt(b_total, true);
+  document.getElementById('res_b_comm').innerHTML = fmt(b_comm, true);
+  document.getElementById('res_b_pg').innerHTML = fmt(b_pg, true);
 
---------------------------------------------------
-NET PAYOUT =                   ₹${final}
---------------------------------------------------
-`;
+  // Section C
+  document.getElementById('res_c_total').innerHTML = fmt(c_total, true);
+  document.getElementById('res_c_gst_fee').innerHTML = fmt(c_gst_fee, true);
+  document.getElementById('res_c_gst_remit').innerHTML = fmt(c_gst_remit, true);
+
+  // Final
+  document.getElementById('res_final').innerText = `₹ ${payout.toFixed(2)}`;
 }
 </script>
 
